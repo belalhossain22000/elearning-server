@@ -59,7 +59,7 @@ async function run() {
       const { email, password } = req.body;
 
       const existingUser = await usersCollection.findOne({ email });
-      const userId = existingUser._id;
+      const userId = existingUser?._id;
       // Check if username and password are valid (dummy check in this example)
       if (
         email === existingUser?.email &&
@@ -78,6 +78,24 @@ async function run() {
         res.status(401).json({ error: "Invalid credentials" });
       }
     });
+
+    //get user by email
+    app.get("/user/:email", async (req, res) => {
+      const userEmail = req.params.email;
+
+      try {
+        const user = await usersCollection.findOne({ email: userEmail });
+
+        if (user) {
+          res.status(200).json(user);
+        } else {
+          res.status(404).json({ error: "User not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
