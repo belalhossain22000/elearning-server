@@ -59,7 +59,6 @@ async function run() {
       // console.log(req.body);
       const existingUser = await usersCollection.findOne({ email });
       const userId = existingUser?._id;
-      console.log(existingUser.uniqueId);
 
       // Check if username and password are valid (dummy check in this example)
       if (
@@ -104,6 +103,41 @@ async function run() {
 
         if (user) {
           res.status(200).json(user);
+        } else {
+          res.status(404).json({ error: "User not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+    // Update user by email
+    app.put("/users/:email", async (req, res) => {
+      const userEmail = req.params.email;
+      const updatedData = req.body;
+
+      try {
+        // Check if the user exists
+        const existingUser = await usersCollection.findOne({
+          email: userEmail,
+        });
+
+        if (existingUser) {
+          // Update user information
+          const updatedUser = await usersCollection.findOneAndUpdate(
+            { email: userEmail },
+            { $set: updatedData }, // Set the updated data
+            { returnOriginal: false } // To get the updated document
+          );
+
+          if (updatedUser) {
+            res.status(200).json({
+              success: true,
+              message: "user update successfully",
+              updatedUser,
+            }); // Send back the updated user data
+          } else {
+            res.status(500).json({ error: "Failed to update user" });
+          }
         } else {
           res.status(404).json({ error: "User not found" });
         }
