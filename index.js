@@ -30,57 +30,73 @@ async function run() {
     const usersCollection = client.db("E-Learning").collection("users");
 
     //registration route
-    app.post("/create-user", async (req, res) => {
+    app.post("/users/create-user", async (req, res) => {
       try {
         const user = req.body;
         const email = user.email;
-        console.log(user, email);
         // Check if the user already exists (you can define your own logic here)
         const existingUser = await usersCollection.findOne({ email });
 
         if (existingUser) {
-          return res.status(400).json({ error: "User already exists" });
+          throw new Error("User Already Exist");
         }
 
         // Create a new user in the MongoDB database
         await usersCollection.insertOne(user);
 
         // Respond with success message
-        res.status(201).json({ message: "User created successfully", user });
+        res.status(201).send({ message: "User created successfully", user });
       } catch (error) {
-        console.error("Error creating user:", error);
-        res.status(500).json({ error: "Internal server error" });
+        console.error(error);
+        res.status(500).send({ error });
       }
     });
 
     // Login route
-    app.post("/login", async (req, res) => {
+    app.post("/users/login", async (req, res) => {
       // Mock user data (replace this with your authentication logic)
-      const { email, password } = req.body;
-
+      const { email, password, parseUId } = req.body;
+      // console.log(req.body);
       const existingUser = await usersCollection.findOne({ email });
       const userId = existingUser?._id;
+      console.log(existingUser.uniqueId);
+
       // Check if username and password are valid (dummy check in this example)
       if (
         email === existingUser?.email &&
-        password === existingUser?.password
+        password === existingUser?.password &&
+        parseUId === existingUser?.uniqueId
       ) {
         // Replace with the user ID from your database
         const token = jwt.sign(
           { userId },
           process.env.ACCESS_TOKEN_SECRET_KEY,
           {
-            expiresIn: "3d",
+            expiresIn: "7d",
           }
         );
-        res.json({ token });
+        res.status(200).send({ token, email });
       } else {
         res.status(401).json({ error: "Invalid credentials" });
       }
     });
 
+    //get all users
+    app.get("/users", async (req, res) => {
+      try {
+        const user = await usersCollection.find().toArray();
+
+        if (user) {
+          res.status(200).json(user);
+        } else {
+          res.status(404).json({ error: "User not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
     //get user by email
-    app.get("/user/:email", async (req, res) => {
+    app.get("/users/:email", async (req, res) => {
       const userEmail = req.params.email;
 
       try {
@@ -109,7 +125,7 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-  res.send("Hello World!");
+  res.send("Server is running");
 });
 
 app.listen(port, () => {
