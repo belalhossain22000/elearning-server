@@ -26,7 +26,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     const usersCollection = client.db("E-Learning").collection("users");
 
     //registration route
@@ -55,18 +55,16 @@ async function run() {
     // Login route
     app.post("/users/login", async (req, res) => {
       // Mock user data (replace this with your authentication logic)
-      const { email, password, parseUId } = req.body;
-      // console.log(req.body);
+      const { email, password, uniqueId } = req.body;
       const existingUser = await usersCollection.findOne({ email });
       const userId = existingUser?._id;
 
-      // Check if username and password are valid (dummy check in this example)
+      console.log(uniqueId == existingUser?.uniqueId);
       if (
-        email === existingUser?.email &&
-        password === existingUser?.password &&
-        parseUId === existingUser?.uniqueId
+        email == existingUser?.email &&
+        password == existingUser?.password &&
+        uniqueId == existingUser?.uniqueId
       ) {
-        // Replace with the user ID from your database
         const token = jwt.sign(
           { userId },
           process.env.ACCESS_TOKEN_SECRET_KEY,
@@ -145,7 +143,6 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
