@@ -28,6 +28,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const usersCollection = client.db("E-Learning").collection("users");
+    const classesCollection = client.db("E-Learning").collection("classes");
 
     //registration route
     app.post("/users/create-user", async (req, res) => {
@@ -112,7 +113,7 @@ async function run() {
     app.put("/users/:email", async (req, res) => {
       const userEmail = req.params.email;
       const updatedData = req.body;
-
+      console.log(userEmail, updatedData);
       try {
         // Check if the user exists
         const existingUser = await usersCollection.findOne({
@@ -124,7 +125,7 @@ async function run() {
           const updatedUser = await usersCollection.findOneAndUpdate(
             { email: userEmail },
             { $set: updatedData }, // Set the updated data
-            { returnOriginal: false } // To get the updated document
+            { new: true } // To get the updated document
           );
 
           if (updatedUser) {
@@ -143,6 +144,47 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
+
+    // Create a new class link
+    app.post("/add-class-link", async (req, res) => {
+      try {
+        const { classLinks } = req.body; // Expecting an array of class links in the request body
+
+        // Your logic to insert the new class links into the database
+        // For example:
+        const result = await classesCollection.insertMany(classLinks);
+
+        res
+          .status(201)
+          .json({ message: "Class links added successfully", result });
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
+    // Delete a class link by ID
+    app.delete("/delete-class-link/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        // Your logic to delete the class link by ID from the database
+        // For example:
+        const result = await classesCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        if (result.deletedCount === 0) {
+          return res.status(404).json({ error: "Class link not found" });
+        }
+
+        res
+          .status(200)
+          .json({ message: "Class link deleted successfully", result });
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
