@@ -143,6 +143,36 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id; // Fetch user ID from request parameters
+
+      try {
+        // Check if the user exists
+        const existingUser = await usersCollection.findOne({
+          _id: new ObjectId(id),
+        });
+
+        if (existingUser) {
+          // Delete user by ID
+          const result = await usersCollection.deleteOne({
+            _id: new ObjectId(id),
+          });
+
+          if (result.deletedCount === 1) {
+            res.status(200).json({
+              success: true,
+              message: "User deleted successfully",
+            });
+          } else {
+            res.status(500).json({ error: "Failed to delete user" });
+          }
+        } else {
+          res.status(404).json({ error: "User not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
 
     // Create a new class link
     app.post("/add-class-link", async (req, res) => {
@@ -177,10 +207,10 @@ async function run() {
         res.status(500).json({ error: "Server error" });
       }
     });
+    //update classes link
     app.put("/update-class-link", async (req, res) => {
       const { classLink, id } = req.body;
 
-      console.log(req.body);
       try {
         const result = await classesCollection.findOneAndUpdate(
           { _id: new ObjectId(id) },
@@ -207,8 +237,6 @@ async function run() {
       try {
         const { id } = req.params;
 
-        // Your logic to delete the class link by ID from the database
-        // For example:
         const result = await classesCollection.deleteOne({
           _id: new ObjectId(id),
         });
