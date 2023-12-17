@@ -11,7 +11,7 @@ app.use(express.json());
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = process.env.DATABASE_URL;
-//console.log(process.env.ACCESS_TOKEN_SECRET_KEY);
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -60,7 +60,6 @@ async function run() {
       const existingUser = await usersCollection.findOne({ email });
       const userId = existingUser?._id;
 
-      console.log(uniqueId == existingUser?.uniqueId);
       if (
         email == existingUser?.email &&
         password == existingUser?.password &&
@@ -113,7 +112,7 @@ async function run() {
     app.put("/users/:email", async (req, res) => {
       const userEmail = req.params.email;
       const updatedData = req.body;
-      console.log(userEmail, updatedData);
+
       try {
         // Check if the user exists
         const existingUser = await usersCollection.findOne({
@@ -159,6 +158,47 @@ async function run() {
           .json({ message: "Class links added successfully", result });
       } catch (error) {
         res.status(500).json({ error: "Server error" });
+      }
+    });
+
+    app.get("/get-class-link", async (req, res) => {
+      try {
+        const result = await classesCollection.find().toArray();
+
+        if (result.length) {
+          res.status(200).json({
+            message: "Class link retrieve  successfully",
+            classesLinks: result,
+          });
+        } else {
+          res.status(404).json({ error: "Class not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+      }
+    });
+    app.put("/update-class-link", async (req, res) => {
+      const { classLink, id } = req.body;
+
+      console.log(req.body);
+      try {
+        const result = await classesCollection.findOneAndUpdate(
+          { _id: new ObjectId(id) },
+          { $set: { classLink: classLink } },
+          { returnOriginal: false }
+        );
+
+        if (result) {
+          res.status(200).json({
+            message: "Class link updated successfully",
+            updatedClass: result,
+          });
+        } else {
+          res.status(404).json({ error: "Class not found" });
+        }
+      } catch (error) {
+        res.status(500).json({ error: "Server error" });
+        console.log(error);
       }
     });
 
